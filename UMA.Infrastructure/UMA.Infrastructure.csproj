@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<RootNamespace>UMA.Infrastructure</RootNamespace>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Persistence\Repositories\JwtTokenRepository.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Azure.Storage.Blobs" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+		<PackageReference Include="BCrypt.Net-Core" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+		<PackageReference Include="Portable.BouncyCastle" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\UMA.Domain\UMA.Domain.csproj" />
+		<ProjectReference Include="..\UMA.Application\UMA.Application.csproj" />
+	</ItemGroup>
+
+</Project>

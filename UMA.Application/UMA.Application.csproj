@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<RootNamespace>UMA.Application</RootNamespace>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Serilog.AspNetCore" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<ProjectReference Include="..\UMA.Domain\UMA.Domain.csproj" />
+		<ProjectReference Include="..\UMA.Shared\UMA.Shared.csproj" />
+	</ItemGroup>
+
+</Project>

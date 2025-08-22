@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<IsTestProject>true</IsTestProject>
+		<TargetFramework>net7.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="coverlet.collector">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />
+		<PackageReference Include="xunit" />
+		<PackageReference Include="xunit.runner.visualstudio">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Moq" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\UMA.Domain\UMA.Domain.csproj" />
+		<ProjectReference Include="..\UMA.Shared\UMA.Shared.csproj" />
+		<ProjectReference Include="..\UMA.Application\UMA.Application.csproj" />
+		<ProjectReference Include="..\UMA.Infrastructure\UMA.Infrastructure.csproj" />
+		<ProjectReference Include="..\UMA.API\UMA.API.csproj" />
+	</ItemGroup>
+
+</Project>
