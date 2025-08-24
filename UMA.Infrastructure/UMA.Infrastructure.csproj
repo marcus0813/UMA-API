@@ -24,4 +24,8 @@
 		<ProjectReference Include="..\UMA.Application\UMA.Application.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Migrations\" />
+	</ItemGroup>
+
 </Project>

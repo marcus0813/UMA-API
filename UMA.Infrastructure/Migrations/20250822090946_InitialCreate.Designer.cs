@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UMA.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using UMA.Infrastructure.Persistence;
 namespace UMA.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250822090946_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -54,7 +57,11 @@ namespace UMA.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<string>("RefreshToken")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("ID");
@@ -67,14 +74,25 @@ namespace UMA.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            ID = new Guid("4c13bdf2-12cb-486d-bd2c-24c23d916a6d"),
-                            CreatedAt = new DateTime(2025, 8, 19, 13, 39, 49, 964, DateTimeKind.Utc).AddTicks(7937),
+                            ID = new Guid("fa7cfbb5-911a-418d-a39d-101dbd10c00b"),
+                            CreatedAt = new DateTime(2025, 8, 22, 9, 9, 46, 288, DateTimeKind.Utc).AddTicks(5267),
                             Email = "marcus.kok@email.com",
                             FirstName = "Marcus",
                             LastName = "Kok",
-                            Password = "$2b$10$LB9HbCHkEleGIDuoRrpyGe58krqx4bMjIF.a5SJWqPaRy7saOFhoi",
+                            Password = "$2b$10$keaG7Umfr2fr0XZ9PnF.wuiYFTzkrU1uLZyh4Z.tQE6YSn.QXlbfO",
                             ProfilePictureUrl = "",
-                            UpdatedAt = new DateTime(2025, 8, 19, 13, 39, 49, 877, DateTimeKind.Utc).AddTicks(944)
+                            RefreshToken = ""
+                        },
+                        new
+                        {
+                            ID = new Guid("72f04621-e341-453d-b596-7427da8bdd98"),
+                            CreatedAt = new DateTime(2025, 8, 22, 9, 9, 46, 375, DateTimeKind.Utc).AddTicks(8607),
+                            Email = "alfred.kok@email.com",
+                            FirstName = "Alfred",
+                            LastName = "Kok",
+                            Password = "$2b$10$oibRNoAhGh.iiaMCe7T7bubV4fa17PBchNop8WxO4EbSJCSElVJeK",
+                            ProfilePictureUrl = "",
+                            RefreshToken = ""
                         });
                 });
 #pragma warning restore 612, 618

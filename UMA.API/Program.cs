@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Serilog;
 using UMA.Application.Extensions;
 using UMA.Infrastructure.Extensions;
-
+using UMA.Infrastructure.Persistence;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -41,6 +41,30 @@ builder.Services.AddApplication()
 builder.Host.UseSerilog();
 
 var app = builder.Build();
+
+try
+{
+    Console.WriteLine("Applying database migrations...");
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        if (dbContext.Database.CanConnect())
+        {
+            Console.WriteLine("Successfully connected to the database!");
+        }
+        else
+        {
+            Console.WriteLine("Failed to connect to the database.");
+        }
+        Console.WriteLine("Database migrations applied successfully!");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine("An error occurred while applying migrations or connecting to the database.");
+    Console.WriteLine(ex.Message);
+    // You can also log the full exception here if you have a logger configured
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

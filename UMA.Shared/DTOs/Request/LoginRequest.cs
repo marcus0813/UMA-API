@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace UMA.Shared.DTOs.Request
 {
@@ -10,5 +11,8 @@ namespace UMA.Shared.DTOs.Request
 
         [Required(ErrorMessage = "Password is required.")]
         public string Password { get; set; }
+
+        [JsonIgnore]
+        public DateTime LoginTime { get; set; } = DateTime.UtcNow;
     }
 }

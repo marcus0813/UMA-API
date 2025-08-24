@@ -8,8 +8,6 @@ using UMA.Domain.Exceptions.User;
 using UMA.Domain.Exceptions.ImageUpload;
 using UMA.Domain.Exceptions.Extensions;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace UMA.API.Controllers
 {
     [Route("api/[controller]")]
@@ -29,27 +27,29 @@ namespace UMA.API.Controllers
         {
             try
             {
+                Log.Information("RequestBody : {@request}", request);
+
                 var result = await _userService.GetUserAsync(request);
 
-                Log.Information("User {Email} has been created", result.Email);
+                Log.Information("User {email} has been created", result.User.Email);
 
                 return Ok(result);
             }
             catch (UserNotFoundException ex)
             {
-                Log.Error(ex, $"{ex.Message} {request.UserID}");
+                Log.Error(ex, $"UserID :  {request.UserID}  \n  {ex.Message}");
 
                 return NotFound(ex.Message);
             }
             catch (UnauthorizedUserException ex)
             {
-                Log.Error(ex, $"{ex.Message} {request.UserID}");
+                Log.Error(ex, $"UserID :  {request.UserID}  \n  {ex.Message}");
 
                 return Unauthorized(ex.Message);
             }
             catch (Exception ex)
             {
-                Log.Error(ex, $"{ex.Message} {request.UserID}");
+                Log.Error(ex, $"UserID :  {request.UserID}  \n  {ex.Message}");
 
                 return NotFound(ex.Message);
             }
@@ -62,15 +62,17 @@ namespace UMA.API.Controllers
         {
             try
             {
+                Log.Information("RequestBody : {@request}", request);
+
                 var result = await _userService.CreateUserAsync(request);
 
-                Log.Logger.Information("User {Email} has been created", result.Email);
+                Log.Information("User {email} has been created", request.Email);
 
                 return Ok(result);
             }
             catch (EmailAlreadyExistsException ex)
             {
-                Log.Error(ex, $"{ex.Message} {request.Email}");
+                Log.Error(ex, $"Email : {request.Email} \n {ex.Message}");
 
                 return Conflict(ex.Message);
             }
@@ -81,21 +83,23 @@ namespace UMA.API.Controllers
         {
             try
             {
-                var result = await _userService.UpdateUserAsync(request);
+                Log.Information("RequestBody : {@request}", request);
 
-                Log.Information("User {Email} has been created", result.Email);
+                await _userService.UpdateUserAsync(request);
 
-                return Ok(result);
+                Log.Information("User {email} has been created", request.Email);
+
+                return Ok();
             }
             catch (UserNotFoundException ex)
             {
-                Log.Error(ex, $"{ex.Message} {request.UserID}");
+                Log.Error(ex, $"UserID : {request.UserID} \n {ex.Message}");
 
                 return Conflict(ex.Message);
             }
             catch (UnauthorizedAccessException ex)
             {
-                Log.Error(ex, $"{ex.Message} {request.UserID}");
+                Log.Error(ex, $"UserID : {request.UserID} \n {ex.Message}");
 
                 return Unauthorized(ex.Message);
             }
@@ -107,33 +111,41 @@ namespace UMA.API.Controllers
         {
             try
             {
-                var result = await _userService.UploadProfilePictureAsync(request);
+                Log.Information("RequestBody : {@request}", request);
+
+                await _userService.UploadProfilePictureAsync(request);
 
                 Log.Information("User {UserID} has updated profile picture", request.UserID);
 
-                return Ok(result);
+                return Ok();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Log.Error(ex, $"UserID : {request.UserID} \n {ex.Message}");
+
+                return Unauthorized(ex.Message);
             }
             catch (UserNotFoundException ex)
             {
-                Log.Error(ex, $"{ex.Message} {request.UserID}");
+                Log.Error(ex, $"{request.UserID} \n {ex.Message} ");
 
                 return NotFound(ex.Message);
             }           
             catch (InvalidImageFormatException ex)
             {
-                Log.Error(ex, $"{ex.Message} {request.UserID}");
+                Log.Error(ex, $"UserID :  {request.UserID}  \n  {ex.Message}");
 
                 return BadRequest(ex.Message);
             }
             catch (InvalidImageSizeException ex)
             {
-                Log.Error(ex, $"{ex.Message} {request.UserID}");
+                Log.Error(ex, $"UserID :  {request.UserID}  \n  {ex.Message}");
 
                 return BadRequest(ex.Message);
             }
             catch (AzureStorageException ex)
             {
-                Log.Error(ex, $"{ex.Message} {request.UserID}");
+                Log.Error(ex, $"UserID :  {request.UserID}  \n  {ex.Message}");
 
                 return BadRequest(ex.Message);
             }

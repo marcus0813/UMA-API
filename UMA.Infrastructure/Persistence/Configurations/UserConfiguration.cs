@@ -31,11 +31,15 @@ namespace UMA.Infrastructure.Persistence.Configurations
             builder.Property(u => u.ProfilePictureUrl)
                 .HasMaxLength(500);
 
+            builder.Property(u => u.RefreshToken)
+                .HasMaxLength(1000);
+
             builder.Property(u => u.CreatedAt)
                 .IsRequired();
 
-            builder.Property(u => u.UpdatedAt)
-                .IsRequired();
+            builder.Property(u => u.UpdatedAt);
+
+           
         }
     }
 }
