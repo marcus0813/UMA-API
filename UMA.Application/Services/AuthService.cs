@@ -1,9 +1,15 @@
-﻿using UMA.Application.Interfaces;
+﻿using Microsoft.AspNetCore.Http;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using UMA.Application.Interfaces;
+using UMA.Domain.Entities;
 using UMA.Domain.Exceptions.Login;
 using UMA.Domain.Exceptions.User;
 using UMA.Domain.Repositories;
 using UMA.Domain.Services;
 using UMA.Shared.DTOs.Common;
+using UMA.Shared.DTOs.Request;
+using UMA.Shared.DTOs.Response;
 
 namespace UMA.Application.Services
 {
@@ -11,35 +17,93 @@ namespace UMA.Application.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IPasswordHasherService _passwordHasher;
-        private readonly IJwtTokenService _jwtTokenService;
+        private readonly IJwTokenService _jwTokenService;
 
-        public AuthService(IUserRepository userRepository, IPasswordHasherService passwordHasher, IJwtTokenService jwtTokenService)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public AuthService(IUserRepository userRepository, IPasswordHasherService passwordHasher, IJwTokenService jwTokenService, IHttpContextAccessor httpContextAccessor)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
-            _jwtTokenService = jwtTokenService;
+            _jwTokenService = jwTokenService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<JwtTokenResponseDto> VerifyLogin(string email, string password)
+        public async Task<TokenResponse> VerifyLogin(LoginRequest request)
         {
-            var user = await _userRepository.GetUserByEmailAsync(email);
+            //Check user exists, throw exception if user not found
+            var user = await _userRepository.GetUserByEmailAsync(request.Email);
             if (user == null)
             {
                 throw new UserNotFoundException();
             }
 
-            if (!_passwordHasher.Verify(password, user.Password))
+            //Hashing password to check if matched with password from DB
+            //throw exception if not matched
+            if (!_passwordHasher.Verify(request.Password, user.Password))
             {
                 throw new InvalidCrendentialsException();
             }
 
-            DateTime loginTime = DateTime.UtcNow;
-            JwtTokenDto accessToken = _jwtTokenService.GenerateAccessToken(user.ID, user.Email, loginTime);
-            JwtTokenDto refershToken = _jwtTokenService.GenerateRefreshToken(user.ID, user.Email, loginTime);
-            return new JwtTokenResponseDto 
+            //Return both access and refresh token as token response
+            return await GenerateToken(user, request.LoginTime);
+        }
+
+        public async Task<TokenResponse> RefreshAcess(RefreshRequest request)
+        {
+            //Check if both user ID and email are valid from token
+            var currentUser = _httpContextAccessor.HttpContext?.User;
+            var jwTokenIDFromToken = currentUser.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+            var userIDFromToken = currentUser.FindFirst(JwtRegisteredClaimNames.NameId)?.Value;
+            var emailFromToken = currentUser.FindFirst(JwtRegisteredClaimNames.Email)?.Value;
+            if (jwTokenIDFromToken == null || userIDFromToken == null || emailFromToken == null)
             { 
+                throw new UnauthorizedUserException();
+            }
+
+            //Check user exists, throw exception if user not found
+            var user = await _userRepository.GetUserByIDAsync(new Guid(userIDFromToken));
+            var emailExists = await _userRepository.GetUserByEmailAsync(emailFromToken);
+            if (user == null || emailExists == null)
+            {
+                throw new UserNotFoundException();
+            }
+
+            //Check if request token is matched with refresh token from DB
+            var refreshTokenFromDB = user.RefreshToken;
+            if (refreshTokenFromDB != request.Token)
+            { 
+                throw new UnauthorizedUserException();
+            }
+
+            //Get expiry date from refresh token, check refresh token expires, throw exception token expired
+            var refreshToken = _jwTokenService.GetRefreshTokenValue(request.Token);
+            if (refreshToken.ExpiryDate <= DateTime.UtcNow)
+            {
+                throw new TokenExpiredException();
+            }
+
+            //Return both access and refresh token as token response
+            return await GenerateToken(user, request.LoginTime);
+        }
+
+        private async Task<TokenResponse> GenerateToken(User user, DateTime loginTime)
+        {
+            //Generate refresh token and store in DB
+            string refreshToken = _jwTokenService.GenerateRefreshToken(user.ID, user.Email, loginTime);
+            user.RefreshToken = refreshToken;
+            await _userRepository.UpdateUserAsync(user);
+
+            //Get Value from refresh Token
+            TokenDto refreshTokenDto = _jwTokenService.GetRefreshTokenValue(refreshToken); 
+
+            //Generate access token
+            string accessToken = _jwTokenService.GenerateAccessToken(user.ID, user.Email, loginTime, refreshTokenDto.JwTokenID);
+
+            return new TokenResponse
+            {
                 AccessToken = accessToken,
-                RefreshToken = refershToken,
+                RefreshToken = refreshToken
             };
         }
     }

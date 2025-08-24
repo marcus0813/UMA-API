@@ -20,8 +20,9 @@ namespace UMA.Infrastructure.Extensions
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         { 
+            //Serilog Configuration 
             Log.Logger = new LoggerConfiguration()
-                            .MinimumLevel.Override("Microsoft", LogEventLevel.Information) 
+                            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning) 
                             .Enrich.FromLogContext()
                             .WriteTo.Logger(
                                 lc => lc.Filter.ByIncludingOnly(e => e.Properties.ContainsKey("RequestPath"))
@@ -31,7 +32,6 @@ namespace UMA.Infrastructure.Extensions
                                         retainedFileCountLimit: 7
                                     )
                             )
-
                             .WriteTo.Logger(
                                 lc => lc.Filter.ByIncludingOnly(e => e.Exception != null || e.Level == LogEventLevel.Error)
                                     .WriteTo.File(
@@ -42,11 +42,14 @@ namespace UMA.Infrastructure.Extensions
                             )
                             .CreateLogger();
 
+            //Integrate with Database
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
+            //To get claim from the token on request header
             services.AddHttpContextAccessor();
 
+            //JWT Configuration, checking the claims based on configured claims from jwTokenService
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -68,11 +71,13 @@ namespace UMA.Infrastructure.Extensions
                 };
             });
 
+            //Authorized from anonymous API calls
             services.AddAuthorization();
 
+            //Register custom services and repo for DI
             services.AddSingleton<IPasswordHasherService, PasswordHasherService>();
 
-            services.AddScoped<IJwtTokenService, JwtTokenService>();
+            services.AddScoped<IJwTokenService, JwTokenService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAzureBlobStorageService, AzureBlobStorageService>();
 

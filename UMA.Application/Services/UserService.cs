@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using UMA.Application.Interfaces;
 using UMA.Domain.Entities;
+using UMA.Shared.DTOs.Common;
 using UMA.Shared.DTOs.Request;
 using UMA.Shared.DTOs.Response;
 using UMA.Domain.Repositories;
@@ -17,87 +18,122 @@ namespace UMA.Application.Services
         private readonly IUserRepository _userRepository;
         private readonly IAzureBlobStorageService _azureBlobStorageService;
         private readonly IPasswordHasherService _passwordHasherSevice;
-        private readonly IJwtTokenService _jwtTokenService;
+        private readonly IJwTokenService _jwTokenService;
 
         private readonly IConfiguration _config;
 
-        public UserService(IUserRepository userRepository, IAzureBlobStorageService azureBlobStorageService, IPasswordHasherService passwordHasherService, IJwtTokenService jwtTokenService,IConfiguration config)
+        public UserService(IUserRepository userRepository, IAzureBlobStorageService azureBlobStorageService, IPasswordHasherService passwordHasherService, IJwTokenService jwTokenService,IConfiguration config)
         {
             _userRepository = userRepository;
             _azureBlobStorageService=azureBlobStorageService;
-            _jwtTokenService =  jwtTokenService;
+            _jwTokenService =  jwTokenService;
             _passwordHasherSevice = passwordHasherService;
 
             _config = config;
         }
         public async Task<UserResponse> GetUserAsync(GetUserRequest request)
         {
-            var user = await _userRepository.GetUserByIDAsync(request.UserID);          
-            if (user == null)
-            {
-                throw new UserNotFoundException();
-            }
 
-            TokenValidation(request.UserID, request.Email);
-
-            return user.ToDto();
-        }
-        public async Task<UserResponse> CreateUserAsync(CreateUserRequest request)
-        {
-            var user = await _userRepository.GetUserByEmailAsync(request.Email);
-            if (user != null)
-            {
-                throw new EmailAlreadyExistsException();
-            }
-            user = new User
-            {
-                ID = Guid.NewGuid(),
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                Email = request.Email,
-                Password = _passwordHasherSevice.Hash(request.Password)
-            };
-
-            await _userRepository.AddUserAsync(user);
-
-            return user.ToDto();
-        }
-
-        public async Task<UserResponse> UpdateUserAsync(UpdateUserRequest request)
-        {
-            var user = await _userRepository.GetUserByEmailAsync(request.Email);
-            if (user == null)
-            {
-                throw new UserNotFoundException();
-            }
-
-            TokenValidation(request.UserID, request.Email);
-
-            user.FirstName = request.FirstName;
-            user.LastName = request.LastName;
-            user.UpdatedAt = DateTime.UtcNow;
-
-            if (request.Password != null)
-            {
-                user.Password = _passwordHasherSevice.Hash(request.Password);
-            }
-
-            await _userRepository.UpdateUserAsync(user);
-
-            return user.ToDto();
-        }
-        public async Task<UploadPictureResponse> UploadProfilePictureAsync(UploadPictureRequest request)
-        {          
+            //Check user exists, throw exception if user not found
             var user = await _userRepository.GetUserByIDAsync(request.UserID);
             if (user == null)
             {
                 throw new UserNotFoundException();
             }
 
-            TokenValidation(request.UserID, request.Email);
+            //Check if user has existing token and verify the token owned by same user
+            if (string.IsNullOrEmpty(user.RefreshToken) || !_jwTokenService.VerifyUserTokenClaims(request.UserID, request.Email, user.RefreshToken))
+            {
+                throw new UnauthorizedUserException();
+            }
 
+            //Convert Entity to Dto
+            return new UserResponse
+            {
+                User = user.ToDto()
+            };
+        }
+        public async Task<TokenResponse> CreateUserAsync(CreateUserRequest request)
+        {
+            //Check email exists, throw exception if email has been taken
+            var user = await _userRepository.GetUserByEmailAsync(request.Email);
+            if (user != null)
+            {
+                throw new EmailAlreadyExistsException();
+            }
+
+            //Create user Entity for db insertion
+            user = new User
+            {
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                Email = request.Email,
+                Password = _passwordHasherSevice.Hash(request.Password),
+            };
+
+            //Generate Access and Refresh Token
+            var tokenRespose = GenerateToken(user, DateTime.UtcNow);
+            user.RefreshToken = tokenRespose.RefreshToken;
+
+            //Integrate with DB for user creation
+            await _userRepository.AddUserAsync(user);
+
+            //Return token for successful registered user
+            return tokenRespose;
+        }
+        public async Task UpdateUserAsync(UpdateUserRequest request)
+        {
+            //Check user exists, throw exception if user not found
+            var user = await _userRepository.GetUserByIDAsync(request.UserID);
+            if (user == null)
+            {
+                throw new UserNotFoundException();
+            }
+
+            //Check if user has existing token and verify the token owned by same user
+            if (string.IsNullOrEmpty(user.RefreshToken) || !_jwTokenService.VerifyUserTokenClaims(request.UserID, request.Email, user.RefreshToken))
+            {
+                throw new UnauthorizedUserException();
+            }
+
+            //Set to updated values
+            user.FirstName = request.FirstName;
+            user.LastName = request.LastName;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            //Update if only password has changes on it
+            if (request.Password != null)
+            {
+                user.Password = _passwordHasherSevice.Hash(request.Password);
+            }
+
+            //Integrate with DB, to update user
+            await _userRepository.UpdateUserAsync(user);
+        }
+        public async Task<UploadPictureResponse> UploadProfilePictureAsync(UploadPictureRequest request)
+        {          
+            //Check user exists, throw exception if user not found
+            var user = await _userRepository.GetUserByIDAsync(request.UserID);
+            if (user == null)
+            {
+                throw new UserNotFoundException();
+            }
+
+            //Check if user has existing token and verify the token owned by same user
+            if (string.IsNullOrEmpty(user.RefreshToken) || !_jwTokenService.VerifyUserTokenClaims(request.UserID, request.Email, user.RefreshToken))
+            {
+                throw new UnauthorizedUserException();
+            }
+
+            //Generate Access and Refresh Token
+            var tokenRespose = GenerateToken(user, DateTime.UtcNow);
+            user.RefreshToken = tokenRespose.RefreshToken;
+
+            //Validate profile picture file size and profile picture file format 
             ImageValidation(request.ProfilePicture);
 
+            //Integrate with custom azure service then return uploaded image file url
+            //Throw exception if image file failed to upload to Azure Storage
             try
             {
                 var uploadedFile = await _azureBlobStorageService.UploadFilesAsync(request.ProfilePicture);
@@ -110,22 +146,18 @@ namespace UMA.Application.Services
 
             user.UpdatedAt = DateTime.UtcNow;
 
+            //Integrate with DB to update selected user image url 
             await _userRepository.UpdateUserAsync(user);
             return new UploadPictureResponse { 
                 UserID = user.ID,
                 ProfilePictureUrl = user.ProfilePictureUrl
             };
         }
-        private void TokenValidation(Guid userID, string email)
-        {
-            var userFromTokenClaim = _jwtTokenService.GetValueFromTokenClaims();
-            if (userID != userFromTokenClaim.ID || email.ToLower() != userFromTokenClaim.Email.ToLower())
-            {
-                throw new UnauthorizedUserException();
-            }
-        }
+
         private void ImageValidation(IFormFile imageFile) 
         {
+            //Check image file size, throw exception if file size exceeds maximum
+            //Configurable in appsettings
             var maximumImageSizeinMB = _config.GetValue<long>("ImageUploadConfig:MaximumImageSizeinMB");
             long imageSizeInBytes = maximumImageSizeinMB * 1024 * 1024;
             if (imageFile.Length > imageSizeInBytes)
@@ -133,14 +165,34 @@ namespace UMA.Application.Services
                 throw new InvalidImageSizeException(maximumImageSizeinMB.ToString());
             }
 
-            var imageFileNameWithExt = Path.GetFileName(imageFile.FileName).ToUpper();
-            var fileFormat = Path.GetExtension(imageFileNameWithExt).TrimStart('.');
+            //Check image file format, throw exception if file format is not allowed
+            //Configurable in appsettings
+
+            string[] contentTypeSplit = imageFile.ContentType.Split('/'); 
+            var imageFileFormat = contentTypeSplit[1].ToUpper();
             var allowedFileFormat = _config["ImageUploadConfig:AllowedImageFormat"];
             string[] fileFormats = allowedFileFormat.Split('/');
-            if (!fileFormats.Contains(fileFormat))
+            if (!fileFormats.Contains(imageFileFormat))
             {
                 throw new InvalidImageFormatException(allowedFileFormat.ToString());
             }
+        }
+        private TokenResponse GenerateToken(User user, DateTime loginTime)
+        {
+            //Generate refresh token and store in DB
+            string refreshToken = _jwTokenService.GenerateRefreshToken(user.ID, user.Email, loginTime);
+
+            //Get Value from refresh Token
+            TokenDto refreshTokenDto = _jwTokenService.GetRefreshTokenValue(refreshToken);
+
+            //Generate access token
+            string accessToken = _jwTokenService.GenerateAccessToken(user.ID, user.Email, loginTime, refreshTokenDto.JwTokenID);
+
+            return new TokenResponse
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken
+            };
         }
     }
 }
