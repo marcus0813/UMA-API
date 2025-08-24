@@ -11,6 +11,23 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+
+// Add CORS services and define a policy
+string allowSpecificOrigins = "_allowedSpecificOrigins";
+var corsOrigins = builder.Configuration.GetSection("CorsOrigins:Allowed").Get<string[]>();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: allowSpecificOrigins,
+                      policy =>
+                      {
+                          // Use the array of strings directly from configuration
+                          // The `WithOrigins` method can accept a string array.
+                          policy.WithOrigins(corsOrigins)
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                      });
+});
+
 builder.Services.AddSwaggerGen(options =>
 {
     var jwtSecurityScheme = new OpenApiSecurityScheme
@@ -72,6 +89,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseCors(allowSpecificOrigins);
 
 app.UseSerilogRequestLogging();
 
