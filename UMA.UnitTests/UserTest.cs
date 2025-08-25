@@ -688,7 +688,7 @@ namespace UMA.UnitTests
         private void SetupAzureBlobStorageService(string profilePictureUrl)
         {
             //Setup mock service for expected input and output
-            _azureBlobStorageService.Setup(s => s.UploadFilesAsync(It.IsAny<IFormFile>())).ReturnsAsync(new BlobDto{ 
+            _azureBlobStorageService.Setup(s => s.UploadFilesAsync(It.IsAny<IFormFile>(), It.IsAny<Guid>())).ReturnsAsync(new BlobDto{ 
                 Uri = profilePictureUrl,
             });
         }
