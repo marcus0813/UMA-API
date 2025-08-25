@@ -181,13 +181,9 @@ namespace UMA.UnitTests
             var userService = new UserService(_userRepositoryMock.Object, _azureBlobStorageService.Object, _passwordHasherServiceMock.Object, _jwTokenServiceMock.Object, _config);
 
             //Create user then return both access and refresh token
-            var result = await userService.CreateUserAsync(request);
+            await userService.CreateUserAsync(request);
 
             //Result shall be not null,token response type and both access and refresh token shalln't be null
-            Assert.NotNull(result);
-            Assert.IsType<TokenResponse>(result);
-            Assert.NotEmpty(result.AccessToken);
-            Assert.NotEmpty(result.RefreshToken);
         }
 
         [Fact]

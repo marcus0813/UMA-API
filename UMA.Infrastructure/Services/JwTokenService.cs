@@ -69,7 +69,7 @@ namespace UMA.Infrastructure.Services
             var token = new TokenDto
             {
                 JwTokenID = Convert.ToBase64String(randomNumber),
-                ExpiryDate = tokenExpiryTimeStamp
+                ExpiryDate = tokenExpiryTimeStamp,
             };
 
             //Custom write Token feature, encoding for refresh token only

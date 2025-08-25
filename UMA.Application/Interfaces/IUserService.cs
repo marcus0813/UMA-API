@@ -8,7 +8,7 @@ namespace UMA.Application.Interfaces
     public interface IUserService
     {
         Task<UserResponse> GetUserAsync(GetUserRequest request);
-        Task<TokenResponse> CreateUserAsync(CreateUserRequest request);
+        Task CreateUserAsync(CreateUserRequest request);
         Task UpdateUserAsync(UpdateUserRequest request);
         Task<UploadPictureResponse> UploadProfilePictureAsync(UploadPictureRequest request);
     }

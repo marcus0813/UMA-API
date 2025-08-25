@@ -64,11 +64,11 @@ namespace UMA.API.Controllers
             {
                 Log.Information("RequestBody : {@request}", request);
 
-                var result = await _userService.CreateUserAsync(request);
+                await _userService.CreateUserAsync(request);
 
                 Log.Information("User {email} has been created", request.Email);
 
-                return Ok(result);
+                return Ok();
             }
             catch (EmailAlreadyExistsException ex)
             {
@@ -97,7 +97,7 @@ namespace UMA.API.Controllers
 
                 return Conflict(ex.Message);
             }
-            catch (UnauthorizedAccessException ex)
+            catch (UnauthorizedUserException ex)
             {
                 Log.Error(ex, $"UserID : {request.UserID} \n {ex.Message}");
 

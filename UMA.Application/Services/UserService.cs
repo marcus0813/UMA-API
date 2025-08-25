@@ -22,7 +22,7 @@ namespace UMA.Application.Services
 
         private readonly IConfiguration _config;
 
-        public UserService(IUserRepository userRepository, IAzureBlobStorageService azureBlobStorageService, IPasswordHasherService passwordHasherService, IJwTokenService jwTokenService,IConfiguration config)
+        public UserService(IUserRepository userRepository, IAzureBlobStorageService azureBlobStorageService, IPasswordHasherService passwordHasherService, IJwTokenService jwTokenService, IConfiguration config)
         {
             _userRepository = userRepository;
             _azureBlobStorageService=azureBlobStorageService;
@@ -38,7 +38,7 @@ namespace UMA.Application.Services
             var user = await _userRepository.GetUserByIDAsync(request.UserID);
             if (user == null)
             {
-                throw new UserNotFoundException();
+                throw new UnauthorizedUserException();
             }
 
             //Check if user has existing token and verify the token owned by same user
@@ -53,7 +53,7 @@ namespace UMA.Application.Services
                 User = user.ToDto()
             };
         }
-        public async Task<TokenResponse> CreateUserAsync(CreateUserRequest request)
+        public async Task CreateUserAsync(CreateUserRequest request)
         {
             //Check email exists, throw exception if email has been taken
             var user = await _userRepository.GetUserByEmailAsync(request.Email);
@@ -71,15 +71,8 @@ namespace UMA.Application.Services
                 Password = _passwordHasherSevice.Hash(request.Password),
             };
 
-            //Generate Access and Refresh Token
-            var tokenRespose = GenerateToken(user, DateTime.UtcNow);
-            user.RefreshToken = tokenRespose.RefreshToken;
-
             //Integrate with DB for user creation
             await _userRepository.AddUserAsync(user);
-
-            //Return token for successful registered user
-            return tokenRespose;
         }
         public async Task UpdateUserAsync(UpdateUserRequest request)
         {
@@ -111,7 +104,7 @@ namespace UMA.Application.Services
             await _userRepository.UpdateUserAsync(user);
         }
         public async Task<UploadPictureResponse> UploadProfilePictureAsync(UploadPictureRequest request)
-        {          
+        {
             //Check user exists, throw exception if user not found
             var user = await _userRepository.GetUserByIDAsync(request.UserID);
             if (user == null)
@@ -124,10 +117,6 @@ namespace UMA.Application.Services
             {
                 throw new UnauthorizedUserException();
             }
-
-            //Generate Access and Refresh Token
-            var tokenRespose = GenerateToken(user, DateTime.UtcNow);
-            user.RefreshToken = tokenRespose.RefreshToken;
 
             //Validate profile picture file size and profile picture file format 
             ImageValidation(request.ProfilePicture);
@@ -148,13 +137,14 @@ namespace UMA.Application.Services
 
             //Integrate with DB to update selected user image url 
             await _userRepository.UpdateUserAsync(user);
-            return new UploadPictureResponse { 
+            return new UploadPictureResponse
+            {
                 UserID = user.ID,
                 ProfilePictureUrl = user.ProfilePictureUrl
             };
         }
 
-        private void ImageValidation(IFormFile imageFile) 
+        private void ImageValidation(IFormFile imageFile)
         {
             //Check image file size, throw exception if file size exceeds maximum
             //Configurable in appsettings
@@ -168,7 +158,7 @@ namespace UMA.Application.Services
             //Check image file format, throw exception if file format is not allowed
             //Configurable in appsettings
 
-            string[] contentTypeSplit = imageFile.ContentType.Split('/'); 
+            string[] contentTypeSplit = imageFile.ContentType.Split('/');
             var imageFileFormat = contentTypeSplit[1].ToUpper();
             var allowedFileFormat = _config["ImageUploadConfig:AllowedImageFormat"];
             string[] fileFormats = allowedFileFormat.Split('/');
@@ -176,23 +166,6 @@ namespace UMA.Application.Services
             {
                 throw new InvalidImageFormatException(allowedFileFormat.ToString());
             }
-        }
-        private TokenResponse GenerateToken(User user, DateTime loginTime)
-        {
-            //Generate refresh token and store in DB
-            string refreshToken = _jwTokenService.GenerateRefreshToken(user.ID, user.Email, loginTime);
-
-            //Get Value from refresh Token
-            TokenDto refreshTokenDto = _jwTokenService.GetRefreshTokenValue(refreshToken);
-
-            //Generate access token
-            string accessToken = _jwTokenService.GenerateAccessToken(user.ID, user.Email, loginTime, refreshTokenDto.JwTokenID);
-
-            return new TokenResponse
-            {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken
-            };
         }
     }
 }

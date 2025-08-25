@@ -10,7 +10,6 @@ using UMA.Domain.Repositories;
 using UMA.Domain.Services;
 using UMA.Shared.DTOs.Common;
 using UMA.Shared.DTOs.Request;
-using UMA.Shared.DTOs.Response;
 
 namespace UMA.Application.Services
 {
@@ -57,7 +56,7 @@ namespace UMA.Application.Services
             //Check if both user ID and email are valid from token
             var currentUser = _httpContextAccessor.HttpContext?.User;
             var jwTokenIDFromToken = currentUser.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
-            var userIDFromToken = currentUser.FindFirst(JwtRegisteredClaimNames.NameId)?.Value;
+            var userIDFromToken = currentUser.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
             var emailFromToken = currentUser.FindFirst(JwtRegisteredClaimNames.Email)?.Value;
             if (jwTokenIDFromToken == null || userIDFromToken == null || emailFromToken == null)
             { 
@@ -120,19 +119,23 @@ namespace UMA.Application.Services
                     HttpOnly = true,
                     IsEssential = true,
                     Secure = true,
-                    SameSite = SameSiteMode.None
+                    SameSite = SameSiteMode.None,
+                    Path = "/",
                 }
             );
 
             int refreshTokenExpiryDays = _config.GetValue<int>("Jwt:RefreshTokenExpiryDays");
             context.Response.Cookies.Append("refreshToken", token.RefreshToken, 
                 new CookieOptions
-                { 
+                {
                     Expires = DateTime.UtcNow.AddDays(refreshTokenExpiryDays),
                     HttpOnly = true,
                     IsEssential = true,
-                    Secure = _config.GetValue<bool>("Jwt:SercureHttps"),
-                    SameSite = _config.GetValue<bool>("Jwt:SercureHttps") ? SameSiteMode.None : SameSiteMode.Lax
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Path = "/",
+                    Domain="localhost",
+
                 }
             );
         }

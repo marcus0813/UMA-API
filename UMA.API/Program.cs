@@ -58,6 +58,7 @@ builder.Host.UseSerilog();
 
 var app = builder.Build();
 
+//Checking on database connection
 try
 {
     Console.WriteLine("Applying database migrations...");
@@ -79,7 +80,6 @@ catch (Exception ex)
 {
     Console.WriteLine("An error occurred while applying migrations or connecting to the database.");
     Console.WriteLine(ex.Message);
-    // You can also log the full exception here if you have a logger configured
 }
 
 // Configure the HTTP request pipeline.
