@@ -1,4 +1,15 @@
 # UMA-API: Domain-Driven Design Web API
+
+### Tech Stacks
+- ASP.NET Core 7 API
+- EF Core (SQL Server)
+- JWT Auth
+- BCrypt
+- Azure Blob Storage
+- Serilog Logging
+- Swagger
+- xUnit/Moq (Testing) 
+
 ### Prerequisites
 
 - [Visual Studio 2022](https://visualstudio.microsoft.com/) or [VS Code](https://code.visualstudio.com/) with .NET extensions.  
@@ -7,11 +18,11 @@
 - [Entity Framework Core CLI Tools](https://learn.microsoft.com/en-us/ef/core/cli/dotnet) (install via dotnet tool install --global dotnet-ef) 
 
 ### Computer Specifications (Development Environment)
-- Operating System: Windows 10/11, macOS, or Linux
+- Operating System: Windows 10/11, macOS or Linux (Windows 11 used in development)
 - RAM: 8 GB or more recommended (32 GB used in development)
 - Processor: Quad-core processor or better (Intel i5-1135G7 used in development)  
-- Storage: At least 10 GB free disk space for SDKs, packages, and database files  
-- IDE/Editor: Visual Studio 2022 or VS Code with .NET extensions  
+- Storage: At least 10 GB free disk space for SDKs, packages, and database files  (Local SqL Server and Azure Sql Server used in development) 
+- IDE/Editor: Visual Studio 2022 or VS Code with .NET extensions  (Visual Studio 2022 used in development) 
 
 ### Setup Project
 **1. Clone the Repository**
@@ -34,7 +45,7 @@ dotnet restore
 
 **4. Update the Database**
 
-Ensure your SQL Server instance is running and the connection string is configured in appsettings.Development.json. Then apply migrations:
+Ensure your SQL Server instance is running and the connection string is configured in appsettings.Development.json. Then apply migrations with the command below:
 
 ```bash
 dotnet ef database update --project UMA.Infrastructure --startup-project UMA.API

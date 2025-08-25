@@ -134,8 +134,6 @@ namespace UMA.Application.Services
                     Secure = true,
                     SameSite = SameSiteMode.None,
                     Path = "/",
-                    Domain="localhost",
-
                 }
             );
         }
