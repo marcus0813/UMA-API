@@ -638,7 +638,7 @@ namespace UMA.UnitTests
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Jti, refreshTokenDto.JwTokenID),
-                new Claim(JwtRegisteredClaimNames.NameId, userID.ToString()),
+                new Claim(JwtRegisteredClaimNames.Sub, userID.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, email)
             };
 

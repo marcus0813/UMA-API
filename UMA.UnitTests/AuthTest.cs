@@ -60,7 +60,7 @@ namespace UMA.UnitTests
             SetupAllMockServices(user, new Guid(userID), emailFromDB, password);
 
             //Create instance using config and mock services 
-            var authService = new AuthService(_userRepositoryMock.Object, _passwordHasherServiceMock.Object, _jwTokenServiceMock.Object, _httpContextAccessor.Object);
+            var authService = new AuthService(_userRepositoryMock.Object, _passwordHasherServiceMock.Object, _jwTokenServiceMock.Object, _config, _httpContextAccessor.Object);
 
             //Verify user existence and credentials, return both access and refresh token
             var result = await authService.VerifyLogin(request);
@@ -101,7 +101,7 @@ namespace UMA.UnitTests
             SetupAllMockServices(user, user.ID, user.Email, password);
 
             //Create instance using config and mock services 
-            var authService = new AuthService(_userRepositoryMock.Object, _passwordHasherServiceMock.Object, _jwTokenServiceMock.Object, _httpContextAccessor.Object);
+            var authService = new AuthService(_userRepositoryMock.Object, _passwordHasherServiceMock.Object, _jwTokenServiceMock.Object, _config, _httpContextAccessor.Object);
 
             //Verify user existence and credentials, throw user not found exception due to invalid email
             var exception = await Assert.ThrowsAsync<UserNotFoundException>(async () => await authService.VerifyLogin(request));
@@ -140,7 +140,7 @@ namespace UMA.UnitTests
             SetupAllMockServices(user, user.ID, email, password);
 
             //Create instance using config and mock services 
-            var authService = new AuthService(_userRepositoryMock.Object, _passwordHasherServiceMock.Object, _jwTokenServiceMock.Object, _httpContextAccessor.Object);
+            var authService = new AuthService(_userRepositoryMock.Object, _passwordHasherServiceMock.Object, _jwTokenServiceMock.Object, _config, _httpContextAccessor.Object);
 
             //Verify user existence and credentials, throw invalid creds exception due to invalid passsword
             var exception = await Assert.ThrowsAsync<InvalidCrendentialsException>(async () => await authService.VerifyLogin(request));
@@ -174,7 +174,7 @@ namespace UMA.UnitTests
             };
 
             //Create instance using config and mock services 
-            var authService = new AuthService(_userRepositoryMock.Object, _passwordHasherServiceMock.Object, _jwTokenServiceMock.Object, _httpContextAccessor.Object);
+            var authService = new AuthService(_userRepositoryMock.Object, _passwordHasherServiceMock.Object, _jwTokenServiceMock.Object, _config, _httpContextAccessor.Object);
 
             //Verify user existence and credentials, return both access and refresh token
             var result = await authService.RefreshAcess(request);
@@ -209,7 +209,7 @@ namespace UMA.UnitTests
             };
 
             //Create instance using config and mock services 
-            var authService = new AuthService(_userRepositoryMock.Object, _passwordHasherServiceMock.Object, _jwTokenServiceMock.Object, _httpContextAccessor.Object);
+            var authService = new AuthService(_userRepositoryMock.Object, _passwordHasherServiceMock.Object, _jwTokenServiceMock.Object, _config, _httpContextAccessor.Object);
 
             //Verify user existence and credentials, throw unauthorized user exception due to invalid refresh token
             var exception = await Assert.ThrowsAsync<UnauthorizedUserException>(async () => await authService.RefreshAcess(request));

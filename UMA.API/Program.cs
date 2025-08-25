@@ -20,11 +20,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: allowSpecificOrigins,
                       policy =>
                       {
-                          // Use the array of strings directly from configuration
-                          // The `WithOrigins` method can accept a string array.
                           policy.WithOrigins(corsOrigins)
                                 .AllowAnyHeader()
-                                .AllowAnyMethod();
+                                .AllowAnyMethod()
+                                .AllowCredentials();
                       });
 });
 
@@ -89,11 +88,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseHttpsRedirection();
+
+app.UseRouting();
+
 app.UseCors(allowSpecificOrigins);
 
 app.UseSerilogRequestLogging();
-
-app.UseHttpsRedirection();
 
 app.UseAuthentication();
 

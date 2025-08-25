@@ -5,7 +5,7 @@ namespace UMA.Shared.DTOs.Request
 {
     public class RefreshRequest
     {
-        [Required(ErrorMessage = "Token is required.")]
+        [Required(ErrorMessage = "Refresh token is required.")]
         public string Token { get; set; }
 
         [JsonIgnore]

@@ -37,14 +37,15 @@ namespace UMA.Infrastructure.Services
             {
                 Subject = new ClaimsIdentity(new[] {
                     new Claim(JwtRegisteredClaimNames.Jti, jwTokenID),
-                    new Claim(JwtRegisteredClaimNames.NameId, userID.ToString()),
+                    new Claim(JwtRegisteredClaimNames.Sub, userID.ToString()),
                     new Claim(JwtRegisteredClaimNames.Email, email),
                 }),
                 Expires = tokenExpiryTimeStamp,
                 Issuer = issuer,
                 Audience = audience,
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key)),
-                SecurityAlgorithms.HmacSha256Signature),
+                SecurityAlgorithms.HmacSha256Signature),        
+                
             };
 
             //Create jwt instance to create token and write into string format
@@ -85,8 +86,8 @@ namespace UMA.Infrastructure.Services
             var currentUser = _httpContextAccessor.HttpContext?.User;
             
             var jwtTokenIDFromToken = currentUser!.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
-            var userIDStringFromToken = currentUser!.FindFirst(JwtRegisteredClaimNames.NameId)?.Value;
             var emailFromToken = currentUser.FindFirst(JwtRegisteredClaimNames.Email)?.Value;
+            var userIDStringFromToken = currentUser!.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
             //Convert to valid userID type, GUID
             Guid userIDFromToken;

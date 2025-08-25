@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using UMA.Application.Interfaces;
@@ -19,13 +20,15 @@ namespace UMA.Application.Services
         private readonly IPasswordHasherService _passwordHasher;
         private readonly IJwTokenService _jwTokenService;
 
+        private readonly IConfiguration _config;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AuthService(IUserRepository userRepository, IPasswordHasherService passwordHasher, IJwTokenService jwTokenService, IHttpContextAccessor httpContextAccessor)
+        public AuthService(IUserRepository userRepository, IPasswordHasherService passwordHasher, IJwTokenService jwTokenService,IConfiguration config ,IHttpContextAccessor httpContextAccessor)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
             _jwTokenService = jwTokenService;
+            _config = config;
             _httpContextAccessor = httpContextAccessor;
         }
 
@@ -105,6 +108,33 @@ namespace UMA.Application.Services
                 AccessToken = accessToken,
                 RefreshToken = refreshToken
             };
+        }
+
+        public void SetTokenIntoCookies(HttpContext context, TokenResponse token)
+        {
+            int tokenValidityMinutes = _config.GetValue<int>("Jwt:TokenValidityMinutes");
+            context.Response.Cookies.Append("accessToken", token.AccessToken,
+                new CookieOptions
+                {
+                    Expires = DateTime.UtcNow.AddMinutes(tokenValidityMinutes),
+                    HttpOnly = true,
+                    IsEssential = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None
+                }
+            );
+
+            int refreshTokenExpiryDays = _config.GetValue<int>("Jwt:RefreshTokenExpiryDays");
+            context.Response.Cookies.Append("refreshToken", token.RefreshToken, 
+                new CookieOptions
+                { 
+                    Expires = DateTime.UtcNow.AddDays(refreshTokenExpiryDays),
+                    HttpOnly = true,
+                    IsEssential = true,
+                    Secure = _config.GetValue<bool>("Jwt:SercureHttps"),
+                    SameSite = _config.GetValue<bool>("Jwt:SercureHttps") ? SameSiteMode.None : SameSiteMode.Lax
+                }
+            );
         }
     }
 }

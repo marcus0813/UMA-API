@@ -13,6 +13,7 @@ using UMA.Infrastructure.Persistence;
 using UMA.Infrastructure.Persistence.Repositories;
 using UMA.Infrastructure.Services;
 using Serilog.Events;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace UMA.Infrastructure.Extensions
 {
@@ -67,9 +68,25 @@ namespace UMA.Infrastructure.Extensions
                     ValidateIssuer = true,
                     ValidateAudience = true,
                     ValidateLifetime = true,
-                    ValidateIssuerSigningKey= true
+                    ValidateIssuerSigningKey= true,
+                };
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = ctx =>
+                    {
+                        ctx.Request.Cookies.TryGetValue("accessToken", out var accessToken);
+                        if (!string.IsNullOrEmpty(accessToken))
+                        {
+                            ctx.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
                 };
             });
+
+            //Prevent claims mapping
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+            //JwtSecurityTokenHandler.DefaultOutboundClaimTypeMap.Clear();
 
             //Authorized from anonymous API calls
             services.AddAuthorization();

@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Serilog;
 using UMA.Application.Interfaces;
 using UMA.Shared.DTOs.Request;
 using UMA.Domain.Exceptions.Login;
 using UMA.Domain.Exceptions.User;
-using Serilog;
-using System.Text.Json;
 using UMA.Shared.DTOs.Common;
 
 namespace UMA.API.Controllers
@@ -29,9 +28,11 @@ namespace UMA.API.Controllers
 
                 var result = await _authService.VerifyLogin(request);
 
+                _authService.SetTokenIntoCookies(HttpContext, result);
+
                 Log.Information("{email} logged in", request.Email);
                 
-                return Ok(result);
+                return Ok(result.AccessToken);
             }
             catch (UserNotFoundException ex)
             {
@@ -48,34 +49,45 @@ namespace UMA.API.Controllers
 
         }
 
-        [HttpPost("refresh")]
-        public async Task<IActionResult> RefreshAccess([FromBody] RefreshRequest request)
+        [HttpGet("refresh")]
+        public async Task<IActionResult> RefreshAccess()
         {
             try
             {
-                Log.Information("RequestBody : {@request}", request);
+                // Get the cookie from the request
+                if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
+                {
+                    throw new UnauthorizedUserException();
+                }
+
+                RefreshRequest request = new RefreshRequest
+                {
+                    Token = refreshToken
+                };
 
                 var result = await _authService.RefreshAcess(request);
 
+                _authService.SetTokenIntoCookies(HttpContext, result);
+
                 Log.Information("Token Refresh : {@tokens}", result.RefreshToken);
                 
-                return Ok(result);
+                return Ok(result.AccessToken);
             }
             catch (UnauthorizedUserException ex)
             {
-                Log.Error(ex, "RequestBody : {@request} \n {errMsg} ", request, ex.Message);
+                Log.Error(ex, "RequestBody : {@request} \n {errMsg} ", ex.Message);
 
                 return Unauthorized(ex.Message);
             }
             catch (UserNotFoundException ex)
             {
-                Log.Error(ex, "RequestBody : {@request} \n {errMsg} ", request, ex.Message);
+                Log.Error(ex, "RequestBody : {@request} \n {errMsg} ", ex.Message);
 
                 return NotFound(ex.Message);
             }
             catch (TokenExpiredException ex)
             {
-                Log.Error(ex, "RequestBody : {@request} \n {errMsg} ", request, ex.Message);
+                Log.Error(ex, "RequestBody : {@request} \n {errMsg} ", ex.Message);
 
                 return NotFound(ex.Message);
             }
