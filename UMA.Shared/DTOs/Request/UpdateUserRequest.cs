@@ -17,6 +17,7 @@ namespace UMA.Shared.DTOs.Request
         [EmailAddress(ErrorMessage = "Invalid email format.")]
         public string Email { get; set; }
 
-        public string Password { get; set; } 
+        [RegularExpression(@"^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$", ErrorMessage = "Password must be at least 8 characters long and contain at least one uppercase letter and one number.")]
+        public string Password { get; set; } = string.Empty;
     }
 }

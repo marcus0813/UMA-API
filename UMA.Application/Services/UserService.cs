@@ -102,7 +102,7 @@ namespace UMA.Application.Services
             user.UpdatedAt = DateTime.UtcNow;
 
             //Update if only password has changes on it
-            if (request.Password != null)
+            if (!string.IsNullOrEmpty(request.Password))
             {
                 user.Password = _passwordHasherSevice.Hash(request.Password);
             }
@@ -136,7 +136,7 @@ namespace UMA.Application.Services
             //Throw exception if image file failed to upload to Azure Storage
             try
             {
-                var uploadedFile = await _azureBlobStorageService.UploadFilesAsync(request.ProfilePicture);
+                var uploadedFile = await _azureBlobStorageService.UploadFilesAsync(request.ProfilePicture, request.UserID);
                 user.ProfilePictureUrl = uploadedFile.Uri;
             }
             catch (Exception ex)

@@ -5,6 +5,6 @@ namespace UMA.Domain.Services
 {
     public interface IAzureBlobStorageService
     {
-        Task<BlobDto> UploadFilesAsync(IFormFile blob);
+        Task<BlobDto> UploadFilesAsync(IFormFile blob, Guid UserID);
     }
 }

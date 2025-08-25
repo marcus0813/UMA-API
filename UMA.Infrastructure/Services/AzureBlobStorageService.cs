@@ -28,19 +28,21 @@ namespace UMA.Infrastructure.Services
             _blobContainer = _blobServiceClient.GetBlobContainerClient(_config["AzureBlob:Container"]);
         }
 
-        public async Task<BlobDto> UploadFilesAsync(IFormFile blob)
+        public async Task<BlobDto> UploadFilesAsync(IFormFile blob, Guid UserID)
         {
 
             BlobDto result = new BlobDto();
+            
+            string fileName = $"{UserID}{Path.GetExtension(blob.FileName)}";
 
-            BlobClient client = _blobContainer.GetBlobClient(blob.FileName);
+            BlobClient client = _blobContainer.GetBlobClient(fileName);
 
             using (var stream = blob.OpenReadStream())
             {
                 await client.UploadAsync(stream, overwrite: true);
             }
             result.Uri = client.Uri.AbsoluteUri;
-            result.Name = client.Name;
+            result.Name = fileName;
 
             return result;
         }
