@@ -113,13 +113,13 @@ namespace UMA.API.Controllers
             {
                 Log.Information("RequestBody : {@request}", request);
 
-                await _userService.UploadProfilePictureAsync(request);
+                var result = await _userService.UploadProfilePictureAsync(request);
 
-                Log.Information("User {UserID} has updated profile picture", request.UserID);
+                Log.Information("User {UserID} has updated profile picture", result.UserID);
 
-                return Ok();
+                return Ok(result.ProfilePictureUrl);
             }
-            catch (UnauthorizedAccessException ex)
+            catch (UnauthorizedUserException ex)
             {
                 Log.Error(ex, $"UserID : {request.UserID} \n {ex.Message}");
 
