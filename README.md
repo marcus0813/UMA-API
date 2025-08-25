@@ -1,4 +1,15 @@
 # UMA-API: Domain-Driven Design Web API
+
+### Tech Stacks
+- ASP.NET Core 7 API
+- EF Core (SQL Server)
+- JWT Auth
+- BCrypt
+- Azure Blob Storage
+- Serilog Logging
+- Swagger
+- xUnit/Moq (Testing) 
+
 ### Prerequisites
 
 - [Visual Studio 2022](https://visualstudio.microsoft.com/) or [VS Code](https://code.visualstudio.com/) with .NET extensions.  
