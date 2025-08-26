@@ -9,6 +9,6 @@ namespace UMA.Application.Interfaces
     {
         Task<TokenResponse> VerifyLogin(LoginRequest request);
         Task<TokenResponse> RefreshAcess(RefreshRequest request);
-        void SetTokenIntoCookies(HttpContext context, TokenResponse token);
+        void SetTokenIntoCookies(HttpContext context, TokenResponse token, bool isRefreshed = false);
     }
 }

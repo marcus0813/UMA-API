@@ -57,7 +57,7 @@ namespace UMA.API.Controllers
                 // Get the cookie from the request
                 if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
                 {
-                    throw new UnauthorizedUserException();
+                    throw new TokenExpiredException();
                 }
 
                 RefreshRequest request = new RefreshRequest
@@ -67,7 +67,8 @@ namespace UMA.API.Controllers
 
                 var result = await _authService.RefreshAcess(request);
 
-                _authService.SetTokenIntoCookies(HttpContext, result);
+                //remove cookies once trigger
+                _authService.SetTokenIntoCookies(HttpContext, result, true);
 
                 Log.Information("Token Refresh : {@tokens}", result.RefreshToken);
                 
@@ -78,12 +79,6 @@ namespace UMA.API.Controllers
                 Log.Error(ex, "RequestBody : {@request} \n {errMsg} ", ex.Message);
 
                 return Unauthorized(ex.Message);
-            }
-            catch (UserNotFoundException ex)
-            {
-                Log.Error(ex, "RequestBody : {@request} \n {errMsg} ", ex.Message);
-
-                return NotFound(ex.Message);
             }
             catch (TokenExpiredException ex)
             {

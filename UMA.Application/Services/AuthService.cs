@@ -109,7 +109,7 @@ namespace UMA.Application.Services
             };
         }
 
-        public void SetTokenIntoCookies(HttpContext context, TokenResponse token)
+        public void SetTokenIntoCookies(HttpContext context, TokenResponse token, bool isRefreshed = false)
         {
             int tokenValidityMinutes = _config.GetValue<int>("Jwt:TokenValidityMinutes");
             context.Response.Cookies.Append("accessToken", token.AccessToken,
@@ -128,7 +128,7 @@ namespace UMA.Application.Services
             context.Response.Cookies.Append("refreshToken", token.RefreshToken, 
                 new CookieOptions
                 {
-                    Expires = DateTime.UtcNow.AddDays(refreshTokenExpiryDays),
+                    Expires = isRefreshed ? DateTime.UtcNow.AddDays(-1) : DateTime.UtcNow.AddDays(refreshTokenExpiryDays),
                     HttpOnly = true,
                     IsEssential = true,
                     Secure = true,
